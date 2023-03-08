@@ -217,7 +217,7 @@ function init2() {
     bot.on('kicked', (reason) => {
         console.log(`Kicked for ${JSON.parse(reason)["text"]}`)
         var keywords = ["banned", "Kicked from", "lag", "afk", "Lag", "AFK", "LAG", "Banned", "Farm", "farm", "location"]
-        if(str(reason) == 'undefined') return
+        if(String(reason) == 'undefined') return
         for(var word in keywords){
             if (JSON.parse(reason)["text"].indexOf(word)){
                 console.log('Aborting Reconnect')
