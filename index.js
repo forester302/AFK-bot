@@ -10,8 +10,8 @@ var bot = null
 
 function init() {
     bot = mineflayer.createBot({
-        host: 'node2.vadoseship.co.uk',
-        port: 25569,
+        host: 'mc.affinitypro.net',
+        port: 25565,
         auth: 'microsoft',
         version: '1.18.2',
     })
@@ -52,6 +52,18 @@ function lookAtSpecificPlayer () {
 function lookAtBlock () {
     const pos = new Vec3(targetedlocation[0], targetedlocation[1], targetedlocation[2])
     bot.lookAt(pos)
+}
+function killArmorStand () {
+    timer++ 
+    if(timer > 30){
+        timer = 0
+        armorstand = bot.nearestEntity(e => e.mobType === 'Armor Stand')
+        if(!armorstand){
+            bot.swingArm()
+            return
+        }
+        bot.attack(armorstand)
+    }
 }
 
 function autokill () {
@@ -115,7 +127,8 @@ function init2() {
         0: lookAtNearestPlayer,
         1: lookAtSpecificPlayer,
         2: lookAtBlock,
-        4: autokill
+        4: autokill,
+        5: killArmorStand
     }
     currentevent = 0
     targetedplayer = ""
@@ -171,6 +184,11 @@ function init2() {
             case "stay":
                 currentevent = 0
                 bot.pathfinder.setGoal(null)
+                bot.chat(`/afk`)
+                break
+            case "raid":
+                currentevent = 5
+                bot.pathfinder.setGoal(null)
                 break
             case "kill":
                 currentevent = 4
@@ -192,14 +210,14 @@ function init2() {
         const mcData = require('minecraft-data')(bot.version)
         const movements = new Movements(bot, mcData)
         mineflayerViewer(bot, { port: 8008, firstPerson: false })
-
+        bot.chat(`/afk`)
         bot.pathfinder.setMovements(movements)
     })
 
     bot.on('kicked', (reason) => {
         console.log(`Kicked for ${JSON.parse(reason)["text"]}`)
-        var keywords = ["banned", "Kicked from server", "lag", "afk", "Lag", "AFK", "LAG", "Banned", "Farm", "farm", "location"]
-        if(str(reason) == 'undefined') return
+        var keywords = ["banned", "Kicked from", "lag", "afk", "Lag", "AFK", "LAG", "Banned", "Farm", "farm", "location"]
+        if(String(reason) == 'undefined') return
         for(var word in keywords){
             if (JSON.parse(reason)["text"].indexOf(word)){
                 console.log('Aborting Reconnect')
