@@ -1,0 +1,31 @@
+{
+  "server": {
+    "host": "panel.vadoseship.co.uk",
+    "port": 25565,
+    "version": "1.18.2"
+  },
+  "auth": {
+    "type": "microsoft"
+  },
+  "options": {
+    "viewer": {
+      "enabled": true,
+      "port": 8008,
+      "first-person": false
+    },
+    "afk": {
+      "on-join": true,
+      "command": "/afk"
+    },
+    "commanding-players": [
+      "Vadoseship",
+      "Forester302"
+    ],
+    "reply-message": "This is an automated reply, Please contact Vadoseship or Forester302. If you need to kick me include the word 'AFK' in the kick reason.",
+    "autoreconnect": true,
+    "follow-distance": 3,
+    "kill-timing": 20,
+    "raid-kill-timing": 30
+  }
+}
+  
