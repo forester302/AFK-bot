@@ -1,5 +1,6 @@
 const mineflayer = require('mineflayer');
 const { pathfinder, Movements } = require('mineflayer-pathfinder');
+const { GoalBlock } = require('mineflayer-pathfinder').goals;
 const { mineflayer: mineflayerViewer } = require('prismarine-viewer');
 const config = require('config');
 
@@ -127,9 +128,27 @@ function init2() {
 		const mcData = require('minecraft-data')(bot.version);
 		const movements = new Movements(bot, mcData);
 		bot.pathfinder.setMovements(movements);
+
 		if (config.get('options.viewer.enabled')) {
 			mineflayerViewer(bot, { port: config.get('options.viewer.port'), firstPerson: config.get('options.viewer.first-person') });
+			bot.viewer.on('blockClicked', (block, face, button) => {
+				if (button !== 2) return;
+
+				const p = block.position.offset(0, 1, 0);
+
+				bot.pathfinder.setGoal(new GoalBlock(p.x, p.y, p.z));
+			});
+			bot.on('path_update', (r) => {
+				const nodesPerTick = (r.visitedNodes * 50 / r.time).toFixed(2);
+				console.log(`I can get there in ${r.path.length} moves. Computation took ${r.time.toFixed(2)} ms (${nodesPerTick} nodes/tick). ${r.status}`);
+				const path1 = [bot.entity.position.offset(0, 0.5, 0)];
+				for (const node of r.path) {
+					path1.push({ x: node.x, y: node.y + 0.5, z: node.z });
+				}
+				bot.viewer.drawLine('path', path1, 0xff00ff);
+			});
 		}
+
 		if (config.get('options.afk.on-join')) {
 			bot.chat(config.get('options.afk.command'));
 		}
