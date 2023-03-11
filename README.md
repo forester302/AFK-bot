@@ -1,7 +1,7 @@
 
 # Minecraft AFK Bot
 
-While running creates a permanently online Bot account that takes inscruction from online players through private messages.
+While running creates a permanently online Bot account that takes instruction from online players through private messages.
 
 
 
@@ -20,8 +20,32 @@ While running creates a permanently online Bot account that takes inscruction fr
  `node index.js`
 
 
+## Commands
+
+All commands sent via a pm (/msg or /whisper) to the bot
+
+- **stay** - Sets the bot to the default state it is in and clears the pathfinder
+- **follow** - Makes the bot follow a player
+- **goto** - Make the bot Pathfind to a block within 100 blocks of its current location
+    - `goto x y z`
+- **kill** - Attack the entity that the bot is looking at (basically an autoclicker)
+- **raid** - Attack the nearest Armor Stand (Used for certain raid farms)
+- **look** - Look at player or block
+    - `look` - Look at the player who sent command
+    - `look x y z` - Look at specific block coordinates
+    - `look yaw pitch` - Look in a specific direction
+- **mount** - Mounts nearest rideable entity
+    - `mount entity` - mount a specific entity type
+- **dismount** - Dismounts entity
+- **dropall** - Drops the bots inventory
+
+
 ## Authors
 
 - [@forester302](https://www.github.com/forester302)
+
+
+## Contributors
+
 - [@darxit](https://www.github.com/darxit)
 
