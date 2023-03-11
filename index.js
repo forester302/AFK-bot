@@ -22,6 +22,7 @@ function init() {
 function reconnect() {
 	try {
 		console.log('reconnecting');
+		bot.viewer.close();
 		init();
 	}
 	catch {
@@ -158,8 +159,8 @@ function init2() {
 		console.log(`Kicked for ${JSON.parse(reason)['text']}`);
 		const kickkeywords = ['banned', 'Kicked from', 'lag', 'afk', 'Lag', 'AFK', 'LAG', 'Banned', 'Farm', 'farm', 'location'];
 		if (String(reason) == 'undefined') return;
-		for (const word in kickkeywords) {
-			if (JSON.parse(reason)['text'].indexOf(word)) {
+		for (const word of kickkeywords) {
+			if (JSON.parse(reason)['text'].includes(word)) {
 				console.log('Aborting Reconnect');
 				shouldreconnect = false;
 				break;
