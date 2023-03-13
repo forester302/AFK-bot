@@ -30,7 +30,6 @@ function reconnect() {
 	}
 }
 
-
 function init2() {
 
 	const events = {
@@ -44,7 +43,7 @@ function init2() {
 	let targetedlocation = [0, 0, 0];
 	// eslint-disable-next-line no-unused-vars, prefer-const
 	let timer = 0;
-
+	let restart = false
 	let shouldreconnect = config.get('options.autoreconnect');
 
 	const fs = require('node:fs');
@@ -168,10 +167,29 @@ function init2() {
 		}
 	});
 
+	bot.on('kicked', (reason) => {
+		console.log(`Kicked for ${JSON.parse(reason)['text']}`);
+		const reconnectkeywords = ['Server is restarting', 'restart', 'restarting', 'Restarting Server', 'Server closed'];
+		if (String(reason) == 'undefined') return;
+		for (const word of reconnectkeywords) {
+			if (JSON.parse(reason)['text'].includes(word)) {
+				console.log('Server is restarting, waiting 5 minutes')
+				shouldreconnect = false;
+				restart = true;
+				break;
+			}
+		}
+	}
+
+	)
 	// eslint-disable-next-line no-unused-vars
 	bot.on('end', (reason) => {
 		if (shouldreconnect) {
 			setTimeout(reconnect, 10000);
+		}
+		if (restart) {
+			setTimeout(reconnect, 300000);
+			console.log('i made it here, waiting 5 minutes')
 		}
 	});
 }
