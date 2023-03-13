@@ -18,6 +18,7 @@ let targetedlocation = [0, 0, 0];
 // eslint-disable-next-line no-unused-vars, prefer-const
 let timer = 0;
 let shouldreconnect = config.get('options.autoreconnect');
+let restart = false;
 
 
 function initbot() {
@@ -122,6 +123,9 @@ function startbot() {
 
 
 	bot.once('spawn', () => {
+
+		restart = false;
+
 		const mcData = require('minecraft-data')(bot.version);
 		const movements = new Movements(bot, mcData);
 		bot.pathfinder.setMovements(movements);
@@ -150,10 +154,28 @@ function startbot() {
 		}
 	});
 
+	bot.on('kicked', (reason) => {
+		console.log(`Kicked for ${JSON.parse(reason)['text']}`);
+		const reconnectkeywords = ['Server is restarting', 'restart', 'restarting', 'Restarting Server', 'Server closed'];
+		if (String(reason) == 'undefined') return;
+		for (const word of reconnectkeywords) {
+			if (JSON.parse(reason)['text'].includes(word)) {
+				console.log('Server is restarting, waiting 5 minutes')
+				shouldreconnect = false;
+				restart = true;
+				break;
+			}
+		}
+	});
+
 	// eslint-disable-next-line no-unused-vars
 	bot.on('end', (reason) => {
 		if (shouldreconnect) {
 			setTimeout(reconnect, 10000);
+		}
+		if (restart) {
+			setTimeout(reconnect, 300000);
+			console.log('i made it here, waiting 5 minutes');
 		}
 	});
 }
