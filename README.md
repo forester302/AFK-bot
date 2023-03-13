@@ -36,6 +36,7 @@ All commands sent via a pm (/msg or /whisper) to the bot
     - `look yaw pitch` - Look in a specific direction
 - **mount** - Mounts nearest rideable entity
     - `mount entity` - mount a specific entity type
+    - `mount player` - mounts a specific player
 - **dismount** - Dismounts entity
 - **dropall** - Drops the bots inventory
 

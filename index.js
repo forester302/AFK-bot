@@ -1,13 +1,26 @@
 const mineflayer = require('mineflayer');
 const { pathfinder, Movements } = require('mineflayer-pathfinder');
-const { GoalBlock } = require('mineflayer-pathfinder').goals;
-const { mineflayer: mineflayerViewer } = require('prismarine-viewer');
+const autoeat = require('mineflayer-auto-eat').plugin;
 const config = require('config');
 
+// define global variables
 let bot = null;
 
+const events = {
 
-function init() {
+};
+const keywords = {
+
+};
+let currentevent = 'default';
+let targetedplayer = '';
+let targetedlocation = [0, 0, 0];
+// eslint-disable-next-line no-unused-vars, prefer-const
+let timer = 0;
+let shouldreconnect = config.get('options.autoreconnect');
+
+
+function initbot() {
 	bot = mineflayer.createBot({
 		host: config.get('server.host'),
 		port: config.get('server.port'),
@@ -16,13 +29,16 @@ function init() {
 	});
 
 	bot.loadPlugin(pathfinder);
-	init2();
+
+	bot.loadPlugin(autoeat);
 }
 
 function reconnect() {
 	try {
 		console.log('reconnecting');
-		bot.viewer.close();
+		if (config.get('options.viewer.enabled')) {
+			bot.viewer.close();
+		}
 		init();
 	}
 	catch {
@@ -31,22 +47,7 @@ function reconnect() {
 }
 
 
-function init2() {
-
-	const events = {
-
-	};
-	const keywords = {
-
-	};
-	let currentevent = 'default';
-	let targetedplayer = '';
-	let targetedlocation = [0, 0, 0];
-	// eslint-disable-next-line no-unused-vars, prefer-const
-	let timer = 0;
-
-	let shouldreconnect = config.get('options.autoreconnect');
-
+function init() {
 	const fs = require('node:fs');
 	const path = require('node:path');
 
@@ -68,16 +69,13 @@ function init2() {
 			console.log(`${filePath} is invalid`);
 		}
 	}
-	console.log(events);
+	startbot();
+}
 
-	function ExecuteTickEvent() {
-		const dict = events[currentevent]({
-			bot: bot,
-			targetedplayer: targetedplayer,
-			targetedlocation: targetedlocation,
-			timer: timer,
-		});
+function startbot() {
+	initbot();
 
+	function parsereturn(dict) {
 		if (typeof dict == 'undefined') return;
 		if ('currentevent' in dict) {
 			currentevent = dict.currentevent;
@@ -93,7 +91,15 @@ function init2() {
 		}
 	}
 
-	bot.on('physicsTick', ExecuteTickEvent);
+	bot.on('physicsTick', () => {
+		const dict = events[currentevent]({
+			bot: bot,
+			targetedplayer: targetedplayer,
+			targetedlocation: targetedlocation,
+			timer: timer,
+		});
+		parsereturn(dict);
+	});
 
 	bot.on('whisper', (username, message) => {
 		if (username == 'me' || username == bot.username) return;
@@ -107,17 +113,7 @@ function init2() {
 				targetedlocation: targetedlocation,
 				timer: timer,
 			});
-
-			if (typeof dict == 'undefined') return;
-			if ('currentevent' in dict) {
-				currentevent = dict.currentevent;
-			}
-			if ('targetedlocation' in dict) {
-				targetedlocation = dict.targetedlocation;
-			}
-			if ('targetedplayer' in dict) {
-				targetedplayer = dict.targetedplayer;
-			}
+			parsereturn(dict);
 		}
 		else {
 			bot.chat(`/msg ${username} ${config.get('options.reply-message')}`);
@@ -130,24 +126,10 @@ function init2() {
 		const movements = new Movements(bot, mcData);
 		bot.pathfinder.setMovements(movements);
 
+		bot.autoEat.options.useOffhand = true;
+
 		if (config.get('options.viewer.enabled')) {
-			mineflayerViewer(bot, { port: config.get('options.viewer.port'), firstPerson: config.get('options.viewer.first-person') });
-			bot.viewer.on('blockClicked', (block, face, button) => {
-				if (button !== 2) return;
-
-				const p = block.position.offset(0, 1, 0);
-
-				bot.pathfinder.setGoal(new GoalBlock(p.x, p.y, p.z));
-			});
-			bot.on('path_update', (r) => {
-				const nodesPerTick = (r.visitedNodes * 50 / r.time).toFixed(2);
-				console.log(`I can get there in ${r.path.length} moves. Computation took ${r.time.toFixed(2)} ms (${nodesPerTick} nodes/tick). ${r.status}`);
-				const path1 = [bot.entity.position.offset(0, 0.5, 0)];
-				for (const node of r.path) {
-					path1.push({ x: node.x, y: node.y + 0.5, z: node.z });
-				}
-				bot.viewer.drawLine('path', path1, 0xff00ff);
-			});
+			require('./functions/viewer').init(bot);
 		}
 
 		if (config.get('options.afk.on-join')) {
