@@ -25,7 +25,6 @@ function init(bot) {
     });
     //Message Channels
     bot._client.on("voicechat:secret", (packet) => {
-        console.log(packet.secret);
         SVC_OBJ.VoiceServer = new VoiceServer_1.default();
         SVC_OBJ.VoiceServer.init(bot, packet);
     });
