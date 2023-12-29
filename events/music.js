@@ -1,5 +1,4 @@
 function music(data) {
-	console.log(data)
 	const bot = data.bot
 	const message = data.message
 	switch (message[1]) {
