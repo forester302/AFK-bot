@@ -39,6 +39,15 @@ All commands sent via a pm (/msg or /whisper) to the bot
     - `mount player` - mounts a specific player
 - **dismount** - Dismounts entity
 - **dropall** - Drops the bots inventory
+- **music** - Plays music through Simple Voice Chat
+    - `music stop` - Stops all music playing
+    - `music pause` - Pauses current song
+    - `music play` - Resumes playing paused song
+    - `music skip` - Skips current song
+    - `music loop on/off` - Turns looping on and off
+    - `music join group:<group> pass:<pass>` - join a group using the given groupname and password
+    - `music leave` - Leaves a group if in one
+    - `music <songfile>` - plays the specified music file in the audio folder
 
 
 ## Authors
