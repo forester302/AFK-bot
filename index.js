@@ -1,6 +1,9 @@
+//Add mineflayer-simple-voice-chat from github.com/forester302/mineflayer-simple-voice-chat to the directory
+
 const mineflayer = require('mineflayer');
 const { pathfinder, Movements } = require('mineflayer-pathfinder');
 const autoeat = require('mineflayer-auto-eat').plugin;
+const simple_voice_chat = require('./mineflayer-simple-voice-chat').plugin;
 const config = require('config');
 
 // define global variables
@@ -32,6 +35,10 @@ function initbot() {
 	bot.loadPlugin(pathfinder);
 
 	bot.loadPlugin(autoeat);
+
+	if (config.get('options.music.enabled')) {
+		bot.loadPlugin(simple_voice_chat);
+	}
 }
 
 function reconnect() {

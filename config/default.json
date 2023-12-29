@@ -1,17 +1,20 @@
 {
   "server": {
-    "host": "panel.vadoseship.co.uk",
-    "port": 25565,
-    "version": "1.18.2"
+    "host": "168.119.111.130",
+    "port": 19140,
+    "version": "1.20.1"
   },
   "auth": {
     "type": "microsoft"
   },
   "options": {
     "viewer": {
-      "enabled": true,
+      "enabled": false,
       "port": 8008,
       "first-person": false
+    },
+    "music": {
+      "enabled": true
     },
     "afk": {
       "on-join": true,
