@@ -25,6 +25,7 @@
       "Forester302"
     ],
     "reply-message": "This is an automated reply, Please contact Vadoseship or Forester302. If you need to kick me include the word 'AFK' in the kick reason.",
+    "no-permissions-message": "You do not have permissions to do that",
     "autoreconnect": true,
     "follow-distance": 3,
     "kill-timing": 20,

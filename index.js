@@ -113,6 +113,10 @@ function startbot() {
 		if (username == 'me' || username == bot.username) return;
 		message = message.split(' ');
 		if (message[0] in keywords) {
+			if (!(username in config.get("options.commanding-players"))) {
+				bot.chat(`/msg ${username} ${config.get("options.no-permissions-message")}`)
+				return;
+			}
 			const dict = keywords[message[0]]({
 				bot: bot,
 				username: username,
