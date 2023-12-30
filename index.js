@@ -1,237 +1,190 @@
-const mineflayer = require('mineflayer')
-const { pathfinder, Movements, goals } = require('mineflayer-pathfinder')
-const { mineflayer: mineflayerViewer } = require('prismarine-viewer')
-const GoalFollow = goals.GoalFollow
-const GoalNear = goals.GoalNear
-const Vec3 = require('vec3')
+//Add mineflayer-simple-voice-chat from github.com/forester302/mineflayer-simple-voice-chat to the directory
 
-var bot = null
+const mineflayer = require('mineflayer');
+const { pathfinder, Movements } = require('mineflayer-pathfinder');
+const autoeat = require('mineflayer-auto-eat').plugin;
+const simple_voice_chat = require('./mineflayer-simple-voice-chat').plugin;
+const config = require('config');
+
+// define global variables
+let bot = null;
+
+const events = {
+
+};
+const keywords = {
+
+};
+let currentevent = 'default';
+let targetedplayer = '';
+let targetedlocation = [0, 0, 0];
+// eslint-disable-next-line no-unused-vars, prefer-const
+let timer = 0;
+let shouldreconnect = config.get('options.autoreconnect');
+let restart = false;
+
+
+function initbot() {
+	bot = mineflayer.createBot({
+		host: config.get('server.host'),
+		port: config.get('server.port'),
+		auth: config.get('auth.type'),
+		version: config.get('server.version'),
+	});
+
+	bot.loadPlugin(pathfinder);
+
+	bot.loadPlugin(autoeat);
+
+	if (config.get('options.music.enabled')) {
+		bot.loadPlugin(simple_voice_chat);
+	}
+}
+
+function reconnect() {
+	try {
+		console.log('reconnecting');
+		if (config.get('options.viewer.enabled')) {
+			bot.viewer.close();
+		}
+		init();
+	}
+	catch {
+		console.log('failed to connect');
+	}
+}
 
 
 function init() {
-    bot = mineflayer.createBot({
-        host: 'mc.affinitypro.net',
-        port: 25565,
-        auth: 'microsoft',
-        version: '1.18.2',
-    })
+	const fs = require('node:fs');
+	const path = require('node:path');
 
-    bot.loadPlugin(pathfinder)
-    init2()
+	const eventsPath = path.join(__dirname, 'events');
+	const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+	for (const file of eventFiles) {
+		const filePath = path.join(eventsPath, file);
+		const event = require(filePath);
+		let valid = false;
+		if ('id' in event && 'execute' in event) {
+			events[event.id] = event.execute;
+			valid = true;
+		}
+		if ('keyword' in event && 'init' in event) {
+			keywords[event.keyword] = event.init;
+			valid = true;
+		}
+		if (!valid) {
+			console.log(`${filePath} is invalid`);
+		}
+	}
+	startbot();
 }
 
+function startbot() {
+	initbot();
 
-function getTargetedPlayer(){
-    const player = bot.players[targetedplayer]
-    if(!player || player.entity == null){
-        currentevent = 0
-        bot.chat(`/msg ${targetedplayer} I Cant See You`)
-        return false
-    }
-    return player
+	function parsereturn(dict) {
+		if (typeof dict == 'undefined') return;
+		if ('currentevent' in dict) {
+			currentevent = dict.currentevent;
+		}
+		if ('targetedlocation' in dict) {
+			targetedlocation = dict.targetedlocation;
+		}
+		if ('targetedplayer' in dict) {
+			targetedplayer = dict.targetedplayer;
+		}
+		if ('timer' in dict) {
+			timer = dict.timer;
+		}
+	}
+
+	bot.on('physicsTick', () => {
+		const dict = events[currentevent]({
+			bot: bot,
+			targetedplayer: targetedplayer,
+			targetedlocation: targetedlocation,
+			timer: timer,
+		});
+		parsereturn(dict);
+	});
+
+	bot.on('whisper', (username, message) => {
+		if (username == 'me' || username == bot.username) return;
+		message = message.split(' ');
+		if (message[0] in keywords) {
+			const dict = keywords[message[0]]({
+				bot: bot,
+				username: username,
+				message: message,
+				targetedplayer: targetedplayer,
+				targetedlocation: targetedlocation,
+				timer: timer,
+			});
+			parsereturn(dict);
+		}
+		else {
+			bot.chat(`/msg ${username} ${config.get('options.reply-message')}`);
+		}
+	});
+
+
+	bot.once('spawn', () => {
+
+		restart = false;
+
+		const mcData = require('minecraft-data')(bot.version);
+		const movements = new Movements(bot, mcData);
+		bot.pathfinder.setMovements(movements);
+
+		bot.autoEat.options.useOffhand = true;
+
+		if (config.get('options.viewer.enabled')) {
+			require('./functions/viewer').init(bot);
+		}
+
+		if (config.get('options.afk.on-join')) {
+			bot.chat(config.get('options.afk.command'));
+		}
+	});
+
+	bot.on('kicked', (reason) => {
+		console.log(`Kicked for ${JSON.parse(reason)['text']}`);
+		const kickkeywords = ['banned', 'Kicked from', 'lag', 'afk', 'Lag', 'AFK', 'LAG', 'Banned', 'Farm', 'farm', 'location'];
+		if (String(reason) == 'undefined') return;
+		for (const word of kickkeywords) {
+			if (JSON.parse(reason)['text'].includes(word)) {
+				console.log('Aborting Reconnect');
+				shouldreconnect = false;
+				break;
+			}
+		}
+	});
+
+	bot.on('kicked', (reason) => {
+		console.log(`Kicked for ${JSON.parse(reason)['text']}`);
+		const reconnectkeywords = ['Server is restarting', 'restart', 'restarting', 'Restarting Server', 'Server closed'];
+		if (String(reason) == 'undefined') return;
+		for (const word of reconnectkeywords) {
+			if (JSON.parse(reason)['text'].includes(word)) {
+				console.log('Server is restarting, waiting 5 minutes')
+				shouldreconnect = false;
+				restart = true;
+				break;
+			}
+		}
+	});
+
+	// eslint-disable-next-line no-unused-vars
+	bot.on('end', (reason) => {
+		if (shouldreconnect) {
+			setTimeout(reconnect, 10000);
+		}
+		if (restart) {
+			setTimeout(reconnect, 300000);
+			console.log('i made it here, waiting 5 minutes');
+		}
+	});
 }
 
-function lookAtNearestPlayer () {
-    const playerFilter = (entity) => entity.type === 'player'
-    const playerEntity = bot.nearestEntity(playerFilter)
-    
-    if (!playerEntity) return
-    
-    const pos = playerEntity.position.offset(0, playerEntity.height, 0)
-    bot.lookAt(pos)
-}
-
-function lookAtSpecificPlayer () {
-    const player = getTargetedPlayer()
-    if(!player) return
-
-    const pos = player.entity.position.offset(0, player.entity.height, 0)
-    bot.lookAt(pos)
-}
-
-function lookAtBlock () {
-    const pos = new Vec3(targetedlocation[0], targetedlocation[1], targetedlocation[2])
-    bot.lookAt(pos)
-}
-function killArmorStand () {
-    timer++ 
-    if(timer > 30){
-        timer = 0
-        armorstand = bot.nearestEntity(e => e.mobType === 'Armor Stand')
-        if(!armorstand){
-            bot.swingArm()
-            return
-        }
-        bot.attack(armorstand)
-    }
-}
-
-function autokill () {
-    timer++
-    if(timer > 20){
-        timer = 0
-        mob = bot.entityAtCursor()
-        if(!mob) {
-            bot.swingArm()
-            return
-        }
-        bot.attack(mob)
-    }
-}
-
-function followPlayer() {
-    const player = getTargetedPlayer()
-    if(!player) return
-
-    const goal = new GoalFollow(player.entity, 3)
-    bot.pathfinder.setGoal(goal, true)
-}
-
-function mountNearestBoat() {
-    const boatFilter = (entity) => entity.type === 'other' && entity.mobType === 'Boat'
-    const boatEntity = bot.nearestEntity(boatFilter)
-    bot.mount(boatEntity)
-}
-
-async function dropall(){
-    var inventoryItemCount = bot.inventory.items().length;
-    if (inventoryItemCount === 0) return
-    while (inventoryItemCount > 0) {
-        const item = bot.inventory.items()[0]
-        
-        await bot.tossStack(item)
-        inventoryItemCount--
-    }
-}
-
-
-
-
-function reconnect() {
-    try{
-        console.log("reconnecting")
-        init()
-    } catch {
-        console.log("failed to connect")
-    }
-}
-
-
-
-
-
-
-
-function init2() {
-    events = {
-        0: lookAtNearestPlayer,
-        1: lookAtSpecificPlayer,
-        2: lookAtBlock,
-        4: autokill,
-        5: killArmorStand
-    }
-    currentevent = 0
-    targetedplayer = ""
-    targetedlocation = [0, 0, 0]
-    timer = 0
-	
-    var shouldreconnect = true
-    
-    function ExecuteTickEvent() {
-        events[currentevent]()
-    }
-
-    bot.on('physicsTick', ExecuteTickEvent)
-
-    bot.on('whisper', (username, message) => {
-        message= message.split(" ")
-        switch (message[0]) {
-            case "look":
-                targetedplayer = username
-                bot.pathfinder.setGoal(null)
-                currentevent = 1
-                if(message.length = 4){
-                    if(!isNaN(message[1]) && !isNaN(message[2]) && !isNaN(message[3])){
-                        targetedlocation = [+message[1], +message[2], +message[3]]
-                        currentevent = 2
-                    }
-                }
-                break
-            case "follow":
-                targetedplayer = username
-                currentevent = 0
-                followPlayer()
-                break
-            case "goto":
-                currentevent = 0
-                if(message.length = 4){
-                    if(!isNaN(message[1]) && !isNaN(message[2]) && !isNaN(message[3])){
-                        targetedlocation = [+message[1], +message[2], +message[3]]
-                        bot.pathfinder.setGoal(new GoalNear(targetedlocation[0], targetedlocation[1]+1, targetedlocation[2], 0))
-                    }
-                }
-                break
-            case "mount":
-                targetedplayer = username
-                currentevent = 0
-                mountNearestBoat()
-                break
-            case "dismount":
-                targetedplayer = username
-                currentevent = 0
-                bot.dismount()
-                break
-            case "stay":
-                currentevent = 0
-                bot.pathfinder.setGoal(null)
-                bot.chat(`/afk`)
-                break
-            case "raid":
-                currentevent = 5
-                bot.pathfinder.setGoal(null)
-                break
-            case "kill":
-                currentevent = 4
-                bot.pathfinder.setGoal(null)
-                break
-            case "dropall":
-                targetedplayer = username
-                dropall()
-                break
-            default:
-                if (username == 'me' || username == bot.username) break;
-                bot.chat(`/msg ${username} This is an automated reply, Please contact Vadoseship or Forester302. If you need to kick me include the word "AFK" in the kick reason.`)
-                break
-        }
-
-    })
-
-    bot.once('spawn', () => {
-        const mcData = require('minecraft-data')(bot.version)
-        const movements = new Movements(bot, mcData)
-        mineflayerViewer(bot, { port: 8008, firstPerson: false })
-        bot.chat(`/afk`)
-        bot.pathfinder.setMovements(movements)
-    })
-
-    bot.on('kicked', (reason) => {
-        console.log(`Kicked for ${JSON.parse(reason)["text"]}`)
-        var keywords = ["banned", "Kicked from", "lag", "afk", "Lag", "AFK", "LAG", "Banned", "Farm", "farm", "location"]
-        if(String(reason) == 'undefined') return
-        for(var word in keywords){
-            if (JSON.parse(reason)["text"].indexOf(word)){
-                console.log('Aborting Reconnect')
-                shouldreconnect = false;
-                break
-            }
-        }
-    })
-
-    bot.on('end', (reason) => {
-        if (shouldreconnect){
-        	setTimeout(reconnect, 10000)
-        }
-    })
-}
-
-init()
+init();

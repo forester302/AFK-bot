@@ -1,0 +1,34 @@
+{
+  "server": {
+    "host": "168.119.111.130",
+    "port": 19140,
+    "version": "1.20.1"
+  },
+  "auth": {
+    "type": "microsoft"
+  },
+  "options": {
+    "viewer": {
+      "enabled": false,
+      "port": 8008,
+      "first-person": false
+    },
+    "music": {
+      "enabled": true
+    },
+    "afk": {
+      "on-join": true,
+      "command": "/afk"
+    },
+    "commanding-players": [
+      "Vadoseship",
+      "Forester302"
+    ],
+    "reply-message": "This is an automated reply, Please contact Vadoseship or Forester302. If you need to kick me include the word 'AFK' in the kick reason.",
+    "autoreconnect": true,
+    "follow-distance": 3,
+    "kill-timing": 20,
+    "raid-kill-timing": 30
+  }
+}
+  
