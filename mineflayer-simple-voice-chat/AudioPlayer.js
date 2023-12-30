@@ -117,8 +117,7 @@ class AudioPlayer {
             const pcmBuffer = fs.promises.readFile(file);
             const opusEncoder = new opus_1.OpusEncoder(this.SAMPLE_RATE, this.CHANNELS);
             const frameSize = (this.SAMPLE_RATE / 1000) * 40 * this.CHANNELS;
-            let frameDelay = BigInt(16142772);
-            frameDelay = BigInt(16431725);
+            frameDelay = BigInt(20500000);
             this.songPlaying = true;
             const frames = [];
             for (let i = 0; i < (yield pcmBuffer).length; i += frameSize) {
