@@ -47,7 +47,7 @@ function reconnect() {
 		if (config.get('options.viewer.enabled')) {
 			bot.viewer.close();
 		}
-		init();
+		startbot();
 	}
 	catch {
 		console.log('failed to connect');
@@ -55,7 +55,7 @@ function reconnect() {
 }
 
 
-function init() {
+function initEvents() {
 	const fs = require('node:fs');
 	const path = require('node:path');
 
@@ -77,7 +77,6 @@ function init() {
 			console.log(`${filePath} is invalid`);
 		}
 	}
-	startbot();
 }
 
 function startbot() {
@@ -112,8 +111,14 @@ function startbot() {
 	bot.on('whisper', (username, message) => {
 		if (username == 'me' || username == bot.username) return;
 		message = message.split(' ');
+		//Add ability to reload events without restarting the bot
+		if (message[0] == "reload") {
+			initEvents()
+			console.log("Reloaded Events")
+			return
+		}
 		if (message[0] in keywords) {
-			if (!(username in config.get("options.commanding-players"))) {
+			if (!config.get("options.commanding-players").includes(username)) {
 				bot.chat(`/msg ${username} ${config.get("options.no-permissions-message")}`)
 				return;
 			}
@@ -154,7 +159,7 @@ function startbot() {
 
 	bot.on('kicked', (reason) => {
 		console.log(`Kicked for ${JSON.parse(reason)['text']}`);
-		const kickkeywords = ['banned', 'Kicked from', 'lag', 'afk', 'Lag', 'AFK', 'LAG', 'Banned', 'Farm', 'farm', 'location'];
+		const kickkeywords = ['banned', 'lag', 'afk', 'Lag', 'AFK', 'LAG', 'Banned', 'Farm', 'farm', 'location'];
 		if (String(reason) == 'undefined') return;
 		for (const word of kickkeywords) {
 			if (JSON.parse(reason)['text'].includes(word)) {
@@ -191,4 +196,5 @@ function startbot() {
 	});
 }
 
-init();
+initEvents();
+startbot()
