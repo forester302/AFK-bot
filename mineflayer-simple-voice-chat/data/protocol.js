@@ -29,6 +29,19 @@ exports.default = {
                 "type": "u8"
             }
         ],
+        "icon": [
+            "array",
+            {
+                "count": 16,
+                "type": [
+                    "array",
+                    {
+                        "count": 16,
+                        "type": "i32"
+                    }
+                ]
+            }
+        ],
         "player_state_struct": [
             "container",
             [
@@ -64,6 +77,7 @@ exports.default = {
                 { "name": "name", "type": "string" },
                 { "name": "hasPassword", "type": "bool" },
                 { "name": "persistent", "type": "bool" },
+                { "name": "hidden", "type": "bool" },
                 { "name": "type", "type": [
                         "mapper",
                         {
@@ -76,10 +90,124 @@ exports.default = {
                         }
                     ] }
             ]
+        ],
+        "volume_category": [
+            "container",
+            [
+                { "name": "id", "type": "string" },
+                { "name": "name", "type": "string" },
+                { "name": "description", "type": ["option", "string"] },
+                { "name": "icon", "type": "icon" }
+            ]
         ]
     },
     "channels": {
         "types": {
+            "add_category": [
+                "container",
+                [
+                    {
+                        "name": "category",
+                        "type": "volume_category"
+                    }
+                ]
+            ],
+            "add_group": [
+                "container",
+                [
+                    {
+                        "name": "group",
+                        "type": "client_group"
+                    }
+                ]
+            ],
+            "create_group": [
+                "container",
+                [
+                    { "name": "name", "type": "string" },
+                    { "name": "password", "type": ["option", "string"] },
+                    { "name": "type", "type": [
+                            "mapper",
+                            {
+                                "type": "i8",
+                                "mappings": {
+                                    "0": "normal",
+                                    "1": "open",
+                                    "2": "closed"
+                                }
+                            }
+                        ] }
+                ]
+            ],
+            "joined_group": [
+                "container",
+                [
+                    { "name": "uuid", "type": ["option", "uuid"] },
+                    { "name": "wrong_password", "type": "bool" }
+                ]
+            ],
+            "set_group": [
+                "container",
+                [
+                    {
+                        "name": "uuid",
+                        "type": "uuid"
+                    },
+                    {
+                        "name": "password",
+                        "type": [
+                            "option",
+                            "string"
+                        ]
+                    }
+                ]
+            ],
+            "leave_group": [
+                "container",
+                []
+            ],
+            "player_state": [
+                "container",
+                [
+                    {
+                        "name": "player_state",
+                        "type": "player_state_struct"
+                    }
+                ]
+            ],
+            "player_states": [
+                "container",
+                [
+                    {
+                        "name": "player_states",
+                        "type": [
+                            "array",
+                            {
+                                "countType": "i32",
+                                "type": "player_state_struct"
+                            }
+                        ]
+                    }
+                ]
+            ],
+            "remove_category": [
+                "container",
+                [
+                    {
+                        "name": "id",
+                        "type": "string"
+                    }
+                ]
+            ],
+            "remove_group": [
+                "container",
+                [
+                    {
+                        "name": "uuid",
+                        "type": "uuid"
+                    }
+                ]
+            ],
             "request_secret": [
                 "container",
                 [
@@ -133,68 +261,6 @@ exports.default = {
                         "type": "bool"
                     }
                 ]
-            ],
-            "player_state": [
-                "container",
-                [
-                    {
-                        "name": "player_state",
-                        "type": "player_state_struct"
-                    }
-                ]
-            ],
-            "player_states": [
-                "container",
-                [
-                    {
-                        "name": "player_states",
-                        "type": [
-                            "array",
-                            {
-                                "countType": "i32",
-                                "type": "player_state_struct"
-                            }
-                        ]
-                    }
-                ]
-            ],
-            "add_group": [
-                "container",
-                [
-                    {
-                        "name": "group",
-                        "type": "client_group"
-                    }
-                ]
-            ],
-            "remove_group": [
-                "container",
-                [
-                    {
-                        "name": "uuid",
-                        "type": "uuid"
-                    }
-                ]
-            ],
-            "set_group": [
-                "container",
-                [
-                    {
-                        "name": "uuid",
-                        "type": "uuid"
-                    },
-                    {
-                        "name": "password",
-                        "type": [
-                            "option",
-                            "string"
-                        ]
-                    }
-                ]
-            ],
-            "leave_group": [
-                "container",
-                []
             ],
             "update_state": [
                 "container",
@@ -308,12 +374,7 @@ exports.default = {
                     },
                     {
                         "name": "secret",
-                        "type": [
-                            "buffer",
-                            {
-                                "count": 16
-                            }
-                        ]
+                        "type": "uuid"
                     }
                 ]
             ],
@@ -340,6 +401,10 @@ exports.default = {
             "PlayerSoundPacket": [
                 "container",
                 [
+                    {
+                        "name": "channel_id",
+                        "type": "uuid"
+                    },
                     {
                         "name": "sender",
                         "type": "uuid"
@@ -386,6 +451,10 @@ exports.default = {
                 "container",
                 [
                     {
+                        "name": "channel_id",
+                        "type": "uuid"
+                    },
+                    {
                         "name": "sender",
                         "type": "uuid"
                     },
@@ -426,6 +495,10 @@ exports.default = {
             "LocationSoundPacket": [
                 "container",
                 [
+                    {
+                        "name": "channel_id",
+                        "type": "uuid"
+                    },
                     {
                         "name": "sender",
                         "type": "uuid"
