@@ -6,7 +6,7 @@ function killArmorStand(data) {
 	timer++;
 	if (timer > config.get('options.raid-kill-timing')) {
 		timer = 0;
-		const armorstand = bot.nearestEntity(e => e.mobType === 'Armor Stand');
+		const armorstand = bot.nearestEntity(e => e.displayName === 'Armor Stand');
 		if (!armorstand) {
 			bot.swingArm();
 			return { timer: timer };
