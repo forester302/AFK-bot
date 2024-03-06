@@ -5,6 +5,7 @@ const { pathfinder, Movements } = require('mineflayer-pathfinder');
 const autoeat = require('mineflayer-auto-eat').plugin;
 const simple_voice_chat = require('./mineflayer-simple-voice-chat').plugin;
 const config = require('config');
+//const webserver = require('./webserver');
 
 // define global variables
 let bot = null;
@@ -39,6 +40,10 @@ function initbot() {
 	if (config.get('options.music.enabled')) {
 		bot.loadPlugin(simple_voice_chat);
 	}
+
+	//if (config.get('options.webui.enabled')) {
+	//	webserver.init(events, keywords, bot);
+	//}
 }
 
 function reconnect() {
@@ -79,27 +84,44 @@ function initEvents() {
 	}
 }
 
+function parsereturn(dict) {
+	if (typeof dict == 'undefined') return;
+	if ('currentevent' in dict) {
+		currentevent = dict.currentevent;
+	}
+	if ('targetedlocation' in dict) {
+		targetedlocation = dict.targetedlocation;
+	}
+	if ('targetedplayer' in dict) {
+		targetedplayer = dict.targetedplayer;
+	}
+	if ('timer' in dict) {
+		timer = dict.timer;
+	}
+	if ('trigger' in dict) {
+		parsereturn(keywords[dict.trigger]({
+			bot: bot,
+			username: dict.username,
+			message: dict.message,
+			targetedplayer: targetedplayer,
+			targetedlocation: targetedlocation,
+			timer: timer,
+		}))
+	}
+}
+
 function startbot() {
 	initbot();
 
-	function parsereturn(dict) {
-		if (typeof dict == 'undefined') return;
-		if ('currentevent' in dict) {
-			currentevent = dict.currentevent;
-		}
-		if ('targetedlocation' in dict) {
-			targetedlocation = dict.targetedlocation;
-		}
-		if ('targetedplayer' in dict) {
-			targetedplayer = dict.targetedplayer;
-		}
-		if ('timer' in dict) {
-			timer = dict.timer;
-		}
-	}
-
 	bot.on('physicsTick', () => {
-		const dict = events[currentevent]({
+		let dict = webserver.tick({
+			bot: bot,
+			targetedplayer: targetedplayer,
+			targetedlocation: targetedlocation,
+			timer: timer
+		});
+		parsereturn(dict);
+		dict = events[currentevent]({
 			bot: bot,
 			targetedplayer: targetedplayer,
 			targetedlocation: targetedlocation,
@@ -195,6 +217,45 @@ function startbot() {
 		}
 	});
 }
+
+async function asyncConsole() {
+    const readline = require('readline');
+
+    const readLineAsync = () => {
+      const rl = readline.createInterface({
+        input: process.stdin
+      });
+
+      return new Promise((resolve) => {
+        rl.prompt();
+        rl.on('line', (line) => {
+          rl.close();
+          resolve(line);
+        });
+      });
+    };
+    
+    while (true) {
+        let message = (await readLineAsync()).split(' ');
+        console.log(message)
+        if (message[0] in keywords) {
+			const dict = keywords[message[0]]({
+				bot: bot,
+				username: "console",
+				message: message,
+				targetedplayer: targetedplayer,
+				targetedlocation: targetedlocation,
+				timer: timer,
+			});
+			parsereturn(dict);
+		}
+		else {
+			console.log(`${config.get('options.reply-message')}`);
+		}
+    }
+}
+
+asyncConsole()
 
 initEvents();
 startbot()

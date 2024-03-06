@@ -21,7 +21,7 @@ function init(bot) {
     SVC_Data.groups = new Map();
     SVC_Data.players = new Map();
     bot.on("spawn", () => {
-        bot._client.write("custom_payload", { channel: "voicechat:request_secret", data: SVC_OBJ.PacketManager.createPacket("request_secret", { "version": 17 }) });
+        bot._client.write("custom_payload", { channel: "voicechat:request_secret", data: SVC_OBJ.PacketManager.createPacket("request_secret", { "version": 18 }) });
     });
     //Message Channels
     bot._client.on("voicechat:secret", (packet) => {
