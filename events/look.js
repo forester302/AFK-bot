@@ -4,6 +4,10 @@ function look(data) {
 	const message = data.message;
 	const bot = data.bot;
 
+	if (username == 'console' && message.length == 2) {
+        username = message[1]
+    }
+
 	const targetedplayer = username;
 
 	// Reset pathfinder

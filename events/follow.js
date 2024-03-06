@@ -8,6 +8,9 @@ function followPlayer(data) {
 	const bot = data.bot;
 
 	// change data object so that the correct targetedplayer is specified
+	if (data.username == "console") {
+        data.username = data.message[1]
+    }
 	data.targetedplayer = data.username;
 
 	// Get targeted player or reset the event if player cant be found
