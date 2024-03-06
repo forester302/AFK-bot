@@ -37,6 +37,7 @@ All commands sent via a pm (/msg or /whisper) to the bot
 - **mount** - Mounts nearest rideable entity
     - `mount entity` - mount a specific entity type
     - `mount player` - mounts a specific player
+- **sneak** - Makes the bot sneak
 - **dismount** - Dismounts entity
 - **dropall** - Drops the bots inventory
 - **music** - Plays music through Simple Voice Chat
