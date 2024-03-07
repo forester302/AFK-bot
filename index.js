@@ -114,13 +114,13 @@ function startbot() {
 	initbot();
 
 	bot.on('physicsTick', () => {
-		let dict = webserver.tick({
+		/*let dict = webserver.tick({
 			bot: bot,
 			targetedplayer: targetedplayer,
 			targetedlocation: targetedlocation,
 			timer: timer
 		});
-		parsereturn(dict);
+		parsereturn(dict);*/
 		dict = events[currentevent]({
 			bot: bot,
 			targetedplayer: targetedplayer,
